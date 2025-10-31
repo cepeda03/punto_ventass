@@ -1,0 +1,5 @@
+django
+python-dotenv
+gunicorn
+psycopg2
+openpyxl>=3.1.2
