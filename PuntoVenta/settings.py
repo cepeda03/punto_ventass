@@ -82,13 +82,14 @@ WSGI_APPLICATION = 'PuntoVenta.wsgi.application'
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
-        "NAME": os.getenv("dbname"),
-        "USER": os.getenv("user"),
-        "PASSWORD": os.getenv("password"),
-        "HOST": os.getenv("host"),
-        "PORT": os.getenv("port"),
+        "NAME": "<tu_username>_db",
+        "USER": "<usuario>",
+        "PASSWORD": "<password>",
+        "HOST": "44.204.176.7",
+        "PORT": "5432",  # Postgres
     }
 }
+
 
 
 # Password validation
