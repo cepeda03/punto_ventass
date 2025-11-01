@@ -1,6 +1,3 @@
-Django==5.2.7
+Django
 gunicorn
-whitenoise
-psycopg[binary]==3.2.12   # <-- subir la versión (o deja sin pin: psycopg[binary])
-Pillow
-django-widget-tweaks
+
