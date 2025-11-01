@@ -80,15 +80,16 @@ WSGI_APPLICATION = 'PuntoVenta.wsgi.application'
 # https://docs.djangoproject.com/en/4.0/ref/settings/#databases
 
 DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.postgresql",
-        "NAME": "<tu_username>_db",
-        "USER": "<usuario>",
-        "PASSWORD": "<password>",
-        "HOST": "44.204.176.7",
-        "PORT": "5432",  # Postgres
-    }
+  "default": {
+    "ENGINE": "django.db.backends.postgresql",
+    "NAME": os.getenv("PGDATABASE",""),
+    "USER": os.getenv("PGUSER",""),
+    "PASSWORD": os.getenv("PGPASSWORD",""),
+    "HOST": os.getenv("PGHOST",""),
+    "PORT": os.getenv("PGPORT","5432"),
+  }
 }
+
 
 
 
