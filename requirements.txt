@@ -1,3 +1,6 @@
-Django
+dj-database-url==2.2.0
+python-dotenv
 gunicorn
-
+whitenoise
+psycopg[binary]
+Django==5.2.7
