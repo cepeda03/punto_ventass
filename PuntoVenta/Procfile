@@ -1,0 +1,2 @@
+web: gunicorn PuntoVenta.wsgi 
+release: python manage.py migrate

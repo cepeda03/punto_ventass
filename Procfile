@@ -1,1 +1,1 @@
-web: gunicorn PuntoVenta.wsgi:application
+web: gunicorn PuntoVenta.wsgi --log-file -
