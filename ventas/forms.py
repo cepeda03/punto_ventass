@@ -1,4 +1,4 @@
-from tkinter import Widget
+from django.forms import Widget
 from django import forms
 from ventas.models import Cliente, Producto
 
