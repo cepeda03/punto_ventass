@@ -13,9 +13,7 @@ from .forms import (
     AddProductoForm, EditarProductoForm
 )
 
-# ---------------------------
-# DJANGO REST FRAMEWORK (API)
-# ---------------------------
+
 from rest_framework import viewsets
 from .serializers import ClienteSerializer, ProductoSerializer, EgresoSerializer
 
@@ -35,13 +33,11 @@ class EgresoViewSet(viewsets.ModelViewSet):
     serializer_class = EgresoSerializer
 
 
-# ---------------------------
-# VISTAS HTML NORMALES
-# ---------------------------
+
 
 def ventas_view(request):
     ventas = Egreso.objects.all()
-    num_ventas = ventas.count()  # mejor que len()
+    num_ventas = ventas.count()  
     context = {
         "ventas": ventas,
         "num_ventas": num_ventas
@@ -258,7 +254,6 @@ def export_pdf_view(request, id=None, iva=None):
     response = HttpResponse(content_type="application/pdf")
     response["Content-Disposition"] = "inline; ticket.pdf"
 
-    # Si usas weasyprint, acá iría HTML(string=html_template).write_pdf(response)
-    # Por ahora devolvemos HTML normal si no tienes weasyprint instalado:
+    
     response.write(html_template)
     return response
