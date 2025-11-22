@@ -1,228 +1,264 @@
-from pyexpat.errors import messages
 from django.shortcuts import render, redirect
-from .models import Cliente, Egreso, Producto, Egreso, ProductosEgreso
-from .forms import AddClienteForm , EditarClienteForm, AddProductoForm, EditarProductoForm
 from django.contrib import messages
 from django.views.generic import ListView
 from django.http import JsonResponse, HttpResponse
-#from weasyprint.text.fonts import FontConfiguration
 from django.template.loader import get_template
-#from weasyprint import HTML, CSS
 from django.conf import settings
 import os
 import json
 
+from .models import Cliente, Egreso, Producto, ProductosEgreso
+from .forms import (
+    AddClienteForm, EditarClienteForm,
+    AddProductoForm, EditarProductoForm
+)
+
+# ---------------------------
+# DJANGO REST FRAMEWORK (API)
+# ---------------------------
+from rest_framework import viewsets
+from .serializers import ClienteSerializer, ProductoSerializer, EgresoSerializer
 
 
-# Create your views here.
+class ClienteViewSet(viewsets.ModelViewSet):
+    queryset = Cliente.objects.all()
+    serializer_class = ClienteSerializer
+
+
+class ProductoViewSet(viewsets.ModelViewSet):
+    queryset = Producto.objects.all()
+    serializer_class = ProductoSerializer
+
+
+class EgresoViewSet(viewsets.ModelViewSet):
+    queryset = Egreso.objects.all()
+    serializer_class = EgresoSerializer
+
+
+# ---------------------------
+# VISTAS HTML NORMALES
+# ---------------------------
 
 def ventas_view(request):
     ventas = Egreso.objects.all()
-    num_ventas = len(ventas)
+    num_ventas = ventas.count()  # mejor que len()
     context = {
-        'ventas': ventas, 
-        'num_ventas': num_ventas
+        "ventas": ventas,
+        "num_ventas": num_ventas
     }
-    return render(request, 'ventas.html', context)
+    return render(request, "ventas.html", context)
+
 
 def clientes_view(request):
     clientes = Cliente.objects.all()
     form_personal = AddClienteForm()
     form_editar = EditarClienteForm()
-
     context = {
-        'clientes': clientes,
-        'form_personal': form_personal, 
-        'form_editar': form_editar,
-       
+        "clientes": clientes,
+        "form_personal": form_personal,
+        "form_editar": form_editar,
     }
-    return render(request, 'clientes.html', context)
+    return render(request, "clientes.html", context)
 
 
 def add_cliente_view(request):
-    #print("Guardar cliente")
-    if request.POST:
+    if request.method == "POST":
         form = AddClienteForm(request.POST, request.FILES)
-        if form.is_valid:
-            try: 
+        if form.is_valid():
+            try:
                 form.save()
-            except:
-                messages(request, "Error al guardar el cliente")
-                return redirect('Clientes')
-    return redirect('Clientes')
+            except Exception:
+                messages.error(request, "Error al guardar el cliente")
+        else:
+            messages.error(request, "Formulario inválido")
+    return redirect("Clientes")
+
 
 def edit_cliente_view(request):
-    if request.POST:
-        cliente = Cliente.objects.get(pk=request.POST.get('id_personal_editar'))
-        form = EditarClienteForm(
-            request.POST, request.FILES, instance= cliente)
+    if request.method == "POST":
+        cliente = Cliente.objects.get(pk=request.POST.get("id_personal_editar"))
+        form = EditarClienteForm(request.POST, request.FILES, instance=cliente)
         if form.is_valid():
             form.save()
-    return redirect('Clientes')
+        else:
+            messages.error(request, "Formulario inválido")
+    return redirect("Clientes")
+
 
 def delete_cliente_view(request):
-    if request.POST:
-        cliente = Cliente.objects.get(pk=request.POST.get('id_personal_eliminar'))
+    if request.method == "POST":
+        cliente = Cliente.objects.get(pk=request.POST.get("id_personal_eliminar"))
         cliente.delete()
+    return redirect("Clientes")
 
-    return redirect('Clientes')
-
-def delete_venta_view(request):
-    if request.POST:
-        cliente = Egreso.objects.get(pk=request.POST.get('id_producto_eliminar'))
-        cliente.delete()
-
-    return redirect('Venta')
 
 def productos_view(request):
-    """
-    clientes = Cliente.objects.all()
-    form_editar = EditarClienteForm()
-    """
     productos = Producto.objects.all()
     form_add = AddProductoForm()
     form_editar = EditarProductoForm()
-
     context = {
-       'productos': productos, 
-       'form_add': form_add, 
-       'form_editar': form_editar
-
+        "productos": productos,
+        "form_add": form_add,
+        "form_editar": form_editar
     }
-    return render(request, 'productos.html', context)
+    return render(request, "productos.html", context)
+
 
 def add_producto_view(request):
-    #print("Guardar cliente")
-    if request.POST:
+    if request.method == "POST":
         form = AddProductoForm(request.POST, request.FILES)
         if form.is_valid():
-            try: 
+            try:
                 form.save()
-            except:
-                messages(request, "Error al guardar el productos")
-                return redirect('Productos')
-
-    return redirect('Productos')
+            except Exception:
+                messages.error(request, "Error al guardar el producto")
+        else:
+            messages.error(request, "Formulario inválido")
+    return redirect("Productos")
 
 
 def edit_producto_view(request):
-    print("Hola")
-    if request.POST:
-        producto = Producto.objects.get(pk=request.POST.get('id_producto_editar'))
-        form = EditarProductoForm(
-            request.POST, request.FILES, instance= producto)
+    if request.method == "POST":
+        producto = Producto.objects.get(pk=request.POST.get("id_producto_editar"))
+        form = EditarProductoForm(request.POST, request.FILES, instance=producto)
         if form.is_valid():
             form.save()
-    return redirect('Productos')
+        else:
+            messages.error(request, "Formulario inválido")
+    return redirect("Productos")
+
 
 def delete_producto_view(request):
-    if request.POST:
-        product = Producto.objects.get(pk=request.POST.get('id_producto_eliminar'))
-        product.delete()
+    if request.method == "POST":
+        producto = Producto.objects.get(pk=request.POST.get("id_producto_eliminar"))
+        producto.delete()
+    return redirect("Productos")
 
-    return redirect('Productos')
+
+def delete_venta_view(request):
+    if request.method == "POST":
+        venta = Egreso.objects.get(pk=request.POST.get("id_producto_eliminar"))
+        venta.delete()
+    return redirect("Venta")
 
 
 class add_ventas(ListView):
-    template_name = 'add_ventas.html'
+    template_name = "add_ventas.html"
     model = Egreso
 
-    def dispatch(self,request,*args,**kwargs):
-        return super().dispatch(request, *args, **kwargs)
-    """
-    def get_queryset(self):
-        return ProductosPreventivo.objects.filter(
-            preventivo=self.kwargs['id']
-        )
-    """
-    def post(self, request,*ars, **kwargs):
+    def post(self, request, *args, **kwargs):
         data = {}
         try:
-            action = request.POST['action']
-            if action == 'autocomplete':
-                data = []
-                for i in Producto.objects.filter(descripcion__icontains=request.POST["term"])[0:10]:
-                    item = i.toJSON()
-                    item['value'] = i.descripcion
-                    data.append(item)
-            elif action == 'save': 
-                #Validamos y recuperamos
-                #print("Hello worl estamos en save") 
-                total_pagado = float(request.POST["efectivo"]) + float(request.POST["tarjeta"]) + float(request.POST["transferencia"]) + float(request.POST["vales"]) + float(request.POST["otro"])
-                #print(total_pagado)
-                fecha = request.POST["fecha"]
-                #print(fecha)
-                id_cliente = request.POST["id_cliente"]
-                #print(id_cliente)
-                cliente_obj = Cliente.objects.get(pk=int(id_cliente))
-                #print(cliente_obj)
-                datos = json.loads(request.POST["verts"])
-                total_venta = float(datos["total"])
-                ticket_num = int(request.POST["ticket"])
-                if ticket_num == 1:
-                    ticket = True
-                else:
-                    ticket = False
-                desglosar_iva_num =int(request.POST["desglosar"])
-                if desglosar_iva_num ==  0:
-                    desglosar_iva = False
-                elif desglosar_iva_num == 1: 
-                    desglosar_iva =True
-                
-                comentarios = request.POST["comentarios"]
-                # Guardar y venta y productos
-                nueva_venta = Egreso(fecha_pedido = fecha, cliente=cliente_obj, total= total_venta, pagado = total_pagado,comentarios=comentarios, ticket=ticket, desglosar=desglosar_iva)
-                nueva_venta.save()
+            action = request.POST.get("action")
 
-                #Agregar productos
-               
+            if action == "autocomplete":
+                data = []
+                term = request.POST.get("term", "")
+                for i in Producto.objects.filter(descripcion__icontains=term)[0:10]:
+                    item = i.toJSON()
+                    item["value"] = i.descripcion
+                    data.append(item)
+
+            elif action == "save":
+                # total pagado
+                total_pagado = (
+                    float(request.POST.get("efectivo", 0)) +
+                    float(request.POST.get("tarjeta", 0)) +
+                    float(request.POST.get("transferencia", 0)) +
+                    float(request.POST.get("vales", 0)) +
+                    float(request.POST.get("otro", 0))
+                )
+
+                fecha = request.POST.get("fecha")
+                id_cliente = request.POST.get("id_cliente")
+                cliente_obj = Cliente.objects.get(pk=int(id_cliente))
+
+                datos = json.loads(request.POST.get("verts", "{}"))
+                total_venta = float(datos.get("total", 0))
+                productos = datos.get("productos", [])
+
+                ticket = int(request.POST.get("ticket", 0)) == 1
+                desglosar_iva = int(request.POST.get("desglosar", 0)) == 1
+                comentarios = request.POST.get("comentarios", "")
+
+                nueva_venta = Egreso.objects.create(
+                    fecha_pedido=fecha,
+                    cliente=cliente_obj,
+                    total=total_venta,
+                    pagado=total_pagado,
+                    comentarios=comentarios,
+                    ticket=ticket,
+                    desglosar=desglosar_iva,
+                )
+
+                # Guardar productos de la venta
+                for p in productos:
+                    prod = Producto.objects.get(pk=int(p["id"]))
+                    ProductosEgreso.objects.create(
+                        egreso=nueva_venta,
+                        producto=prod,
+                        cantidad=float(p.get("cantidad", 1)),
+                        precio=float(p.get("precio", prod.precio)),
+                        subtotal=float(p.get("subtotal", 0)),
+                        iva=float(p.get("iva", 0)),
+                    )
+
+                data["ok"] = True
+                data["id_venta"] = nueva_venta.id
 
             else:
-                data['error'] = "Ha ocurrido un error"
-        except Exception as e:
-            data['error'] = str(e)
-        
-        
+                data["error"] = "Acción no válida"
 
-        return JsonResponse(data,safe=False)
-    
-    def get_context_data(self, **kwargs): 
+        except Exception as e:
+            data["error"] = str(e)
+
+        return JsonResponse(data, safe=False)
+
+    def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["productos_lista"] = Producto.objects.all()
         context["clientes_lista"] = Cliente.objects.all()
-
         return context
 
 
-def export_pdf_view(request, id, iva):
-    #print(id)
+def export_pdf_view(request, id=None, iva=None):
+    """
+    - /export/  -> si no llega id, redirige a ventas
+    - /export/<id>/<iva>/ -> genera pdf
+    """
+    if id is None or iva is None:
+        return redirect("Venta")
+
     template = get_template("ticket.html")
-    #print(id)
-    subtotal = 0 
-    iva_suma = 0 
+    subtotal = 0
+    iva_suma = 0
 
     venta = Egreso.objects.get(pk=float(id))
     datos = ProductosEgreso.objects.filter(egreso=venta)
+
     for i in datos:
-        subtotal = subtotal + float(i.subtotal)
-        iva_suma = iva_suma + float(i.iva)
+        subtotal += float(i.subtotal)
+        iva_suma += float(i.iva)
 
     empresa = "Mi empresa S.A. De C.V"
-    context ={
-        'num_ticket': id,
-        'iva': iva,
-        'fecha': venta.fecha_pedido,
-        'cliente': venta.cliente.nombre,
-        'items': datos, 
-        'total': venta.total, 
-        'empresa': empresa,
-        'comentarios': venta.comentarios,
-        'subtotal': subtotal,
-        'iva_suma': iva_suma,
+    context = {
+        "num_ticket": id,
+        "iva": iva,
+        "fecha": venta.fecha_pedido,
+        "cliente": venta.cliente.nombre,
+        "items": datos,
+        "total": venta.total,
+        "empresa": empresa,
+        "comentarios": venta.comentarios,
+        "subtotal": subtotal,
+        "iva_suma": iva_suma,
     }
+
     html_template = template.render(context)
     response = HttpResponse(content_type="application/pdf")
     response["Content-Disposition"] = "inline; ticket.pdf"
-    css_url = os.path.join(settings.BASE_DIR,'index\static\index\css/bootstrap.min.css')
 
-   
+    # Si usas weasyprint, acá iría HTML(string=html_template).write_pdf(response)
+    # Por ahora devolvemos HTML normal si no tienes weasyprint instalado:
+    response.write(html_template)
+    return response

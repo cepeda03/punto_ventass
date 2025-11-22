@@ -11,7 +11,11 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 ENV_PATH = Path(__file__).resolve().parent / ".env"
 load_dotenv(ENV_PATH, override=True)
 
-SECRET_KEY = "django-insecure-ru2b9_m4llnw(2bkhsiht(slvkl!s=k=imp_i_41*q9fsnwd$m"
+SECRET_KEY = os.getenv(
+    "SECRET_KEY",
+    "django-insecure-ru2b9_m4llnw(2bkhsiht(slvkl!s=k=imp_i_41*q9fsnwd$m"
+)
+
 DEBUG = True
 ALLOWED_HOSTS = ["*"]
 
@@ -25,7 +29,13 @@ INSTALLED_APPS = [
     "ventas",
     "widget_tweaks",
     "django.contrib.humanize",
+    "rest_framework",
 ]
+
+REST_FRAMEWORK = {
+    "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
+    "PAGE_SIZE": 10,
+}
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
@@ -57,11 +67,17 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "PuntoVenta.wsgi.application"
 
-# ---- DB: SQLite por defecto (local), Postgres remoto solo si lo pides) ----
+
+# ---------------------------------------------------------------------------
+# DATABASES
+#   - SQLite local por defecto
+#   - Postgres remoto si USE_REMOTE_DB=1
+# ---------------------------------------------------------------------------
 USE_REMOTE_DB = os.getenv("USE_REMOTE_DB", "0") == "1"
 
 if USE_REMOTE_DB:
-    required = ["DBNAME", "USER", "PASSWORD", "HOST", "PORT"]
+    # Nombres de variables PROPIAS para no chocar con USER del sistema
+    required = ["DBNAME", "DBUSER", "DBPASSWORD", "DBHOST", "DBPORT"]
     missing = [k for k in required if not os.getenv(k)]
     if missing:
         raise RuntimeError(f"Faltan variables {missing} en {ENV_PATH}")
@@ -70,11 +86,11 @@ if USE_REMOTE_DB:
         "default": {
             "ENGINE": "django.db.backends.postgresql",
             "NAME": os.getenv("DBNAME"),
-            "USER": os.getenv("USER"),
-            "PASSWORD": os.getenv("PASSWORD"),
-            "HOST": os.getenv("HOST"),
-            "PORT": os.getenv("PORT"),
-            "OPTIONS": {"sslmode": "require"},  # <- importante en Render
+            "USER": os.getenv("DBUSER"),
+            "PASSWORD": os.getenv("DBPASSWORD"),
+            "HOST": os.getenv("DBHOST"),  # SOLO host, sin 'postgresql://'
+            "PORT": os.getenv("DBPORT", "5432"),
+            "OPTIONS": {"sslmode": "require"},
         }
     }
 else:
@@ -85,6 +101,7 @@ else:
         }
     }
 # ---------------------------------------------------------------------------
+
 
 LANGUAGE_CODE = "es-mx"
 TIME_ZONE = "America/Mexico_City"
