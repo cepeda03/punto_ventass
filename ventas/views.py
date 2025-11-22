@@ -14,30 +14,33 @@ from .forms import (
 )
 
 
-from rest_framework import viewsets
+from rest_framework import viewsets, permissions
 from .serializers import ClienteSerializer, ProductoSerializer, EgresoSerializer
 
 
+
 class ClienteViewSet(viewsets.ModelViewSet):
-    queryset = Cliente.objects.all()
+    queryset = Cliente.objects.all().order_by("id")
     serializer_class = ClienteSerializer
+    permission_classes = [permissions.IsAuthenticated]
 
 
 class ProductoViewSet(viewsets.ModelViewSet):
-    queryset = Producto.objects.all()
+    queryset = Producto.objects.all().order_by("id")
     serializer_class = ProductoSerializer
+    permission_classes = [permissions.IsAuthenticated]
 
 
 class EgresoViewSet(viewsets.ModelViewSet):
-    queryset = Egreso.objects.all()
+    queryset = Egreso.objects.all().order_by("id")
     serializer_class = EgresoSerializer
-
+    permission_classes = [permissions.IsAuthenticated]
 
 
 
 def ventas_view(request):
     ventas = Egreso.objects.all()
-    num_ventas = ventas.count()  
+    num_ventas = ventas.count()
     context = {
         "ventas": ventas,
         "num_ventas": num_ventas
@@ -156,7 +159,6 @@ class add_ventas(ListView):
                     data.append(item)
 
             elif action == "save":
-                # total pagado
                 total_pagado = (
                     float(request.POST.get("efectivo", 0)) +
                     float(request.POST.get("tarjeta", 0)) +
@@ -187,7 +189,6 @@ class add_ventas(ListView):
                     desglosar=desglosar_iva,
                 )
 
-                # Guardar productos de la venta
                 for p in productos:
                     prod = Producto.objects.get(pk=int(p["id"]))
                     ProductosEgreso.objects.create(
@@ -218,10 +219,6 @@ class add_ventas(ListView):
 
 
 def export_pdf_view(request, id=None, iva=None):
-    """
-    - /export/  -> si no llega id, redirige a ventas
-    - /export/<id>/<iva>/ -> genera pdf
-    """
     if id is None or iva is None:
         return redirect("Venta")
 

@@ -1,8 +1,8 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from . import views
+from rest_framework.permissions import AllowAny
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
-
+from . import views
 
 router = DefaultRouter()
 router.register(r"clientes", views.ClienteViewSet)
@@ -10,26 +10,39 @@ router.register(r"productos", views.ProductoViewSet)
 router.register(r"egresos", views.EgresoViewSet)
 
 urlpatterns = [
-    
+    # API REST protegida por JWT (por el DEFAULT_PERMISSION_CLASSES)
     path("api/", include(router.urls)),
+
+    # Login del browsable API (solo una vez para evitar warning)
     path("api/api-auth/", include("rest_framework.urls")),
-    path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
-    path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
 
-    path('', views.ventas_view, name='Venta'),
-    path('clientes/', views.clientes_view, name='Clientes'),
-    path('add_cliente/', views.add_cliente_view, name='AddCliente'),
-    path('edit_cliente/', views.edit_cliente_view, name='EditCliente'),
-    path('delete_cliente/', views.delete_cliente_view, name='DeleteCliente'),
+    # JWT (estos NO deben pedir token para obtener token)
+    path(
+        "api/token/",
+        TokenObtainPairView.as_view(permission_classes=[AllowAny]),
+        name="token_obtain_pair",
+    ),
+    path(
+        "api/token/refresh/",
+        TokenRefreshView.as_view(permission_classes=[AllowAny]),
+        name="token_refresh",
+    ),
 
-    path('productos/', views.productos_view, name='Productos'),
-    path('add_producto/', views.add_producto_view, name='AddProducto'),
-    path('edit_producto/', views.edit_producto_view, name='EditProduct'),
-    path('delete_product/', views.delete_producto_view, name='DeleteProduct'),
+    # tus vistas web normales
+    path("", views.ventas_view, name="Venta"),
+    path("clientes/", views.clientes_view, name="Clientes"),
+    path("add_cliente/", views.add_cliente_view, name="AddCliente"),
+    path("edit_cliente/", views.edit_cliente_view, name="EditCliente"),
+    path("delete_cliente/", views.delete_cliente_view, name="DeleteCliente"),
 
-    path('add_venta/', views.add_ventas.as_view(), name='AddVenta'),
-    path('delete_venta/', views.delete_venta_view, name='DeleteVenta'),
+    path("productos/", views.productos_view, name="Productos"),
+    path("add_producto/", views.add_producto_view, name="AddProducto"),
+    path("edit_producto/", views.edit_producto_view, name="EditProduct"),
+    path("delete_product/", views.delete_producto_view, name="DeleteProduct"),
 
-    path('export/', views.export_pdf_view, name="ExportPDF"),
-    path('export/<id>/<iva>/', views.export_pdf_view, name="ExportPDF"),
+    path("add_venta/", views.add_ventas.as_view(), name="AddVenta"),
+    path("delete_venta/", views.delete_venta_view, name="DeleteVenta"),
+
+    path("export/", views.export_pdf_view, name="ExportPDF"),
+    path("export/<id>/<iva>/", views.export_pdf_view, name="ExportPDF"),
 ]

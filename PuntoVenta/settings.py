@@ -4,10 +4,10 @@ Django settings for PuntoVenta project.
 from pathlib import Path
 import os
 from dotenv import load_dotenv
+from datetime import timedelta
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# Cargar el .env que está dentro de PuntoVenta/
 ENV_PATH = Path(__file__).resolve().parent / ".env"
 load_dotenv(ENV_PATH, override=True)
 
@@ -15,7 +15,6 @@ SECRET_KEY = os.getenv(
     "SECRET_KEY",
     "django-insecure-ru2b9_m4llnw(2bkhsiht(slvkl!s=k=imp_i_41*q9fsnwd$m"
 )
-
 DEBUG = True
 ALLOWED_HOSTS = ["*"]
 
@@ -26,20 +25,24 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+
     "ventas",
     "widget_tweaks",
     "django.contrib.humanize",
+
     "rest_framework",
 ]
 
-
-from datetime import timedelta
-
 REST_FRAMEWORK = {
+    # JWT por defecto
     "DEFAULT_AUTHENTICATION_CLASSES": (
         "rest_framework_simplejwt.authentication.JWTAuthentication",
     ),
-    
+    # 🔥 Todo endpoint API requiere login
+    "DEFAULT_PERMISSION_CLASSES": (
+        "rest_framework.permissions.IsAuthenticated",
+    ),
+
     "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
     "PAGE_SIZE": 10,
 }
@@ -62,10 +65,11 @@ MIDDLEWARE = [
 
 ROOT_URLCONF = "PuntoVenta.urls"
 
+# ✅ ESTE BLOQUE ES OBLIGATORIO PARA ADMIN Y PARA EL LOGIN DEL BROWSABLE API
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [],
+        "DIRS": [],   # si quieres templates globales, pon BASE_DIR / "templates"
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
@@ -80,7 +84,6 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "PuntoVenta.wsgi.application"
 
-
 # ---------------------------------------------------------------------------
 # DATABASES
 #   - SQLite local por defecto
@@ -89,7 +92,6 @@ WSGI_APPLICATION = "PuntoVenta.wsgi.application"
 USE_REMOTE_DB = os.getenv("USE_REMOTE_DB", "0") == "1"
 
 if USE_REMOTE_DB:
-    # Nombres de variables PROPIAS para no chocar con USER del sistema
     required = ["DBNAME", "DBUSER", "DBPASSWORD", "DBHOST", "DBPORT"]
     missing = [k for k in required if not os.getenv(k)]
     if missing:
@@ -101,7 +103,7 @@ if USE_REMOTE_DB:
             "NAME": os.getenv("DBNAME"),
             "USER": os.getenv("DBUSER"),
             "PASSWORD": os.getenv("DBPASSWORD"),
-            "HOST": os.getenv("DBHOST"),  # SOLO host, sin 'postgresql://'
+            "HOST": os.getenv("DBHOST"),
             "PORT": os.getenv("DBPORT", "5432"),
             "OPTIONS": {"sslmode": "require"},
         }
@@ -114,7 +116,6 @@ else:
         }
     }
 # ---------------------------------------------------------------------------
-
 
 LANGUAGE_CODE = "es-mx"
 TIME_ZONE = "America/Mexico_City"
